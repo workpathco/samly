@@ -25,18 +25,35 @@ defmodule Samly.Provider do
   alias Samly.{State}
 
   @doc false
-  def start_link(gs_opts \\ []) do
+  def start_link(gs_opts)
+
+  @doc false
+  def start_link([:dynamic_providers | others] = _gs_opts) do
+    GenServer.start_link(__MODULE__, [:dynamic_providers], others)
+  end
+
+  @doc false
+  def start_link(gs_opts) do
     GenServer.start_link(__MODULE__, [], gs_opts)
   end
 
   @doc false
-  def init([]) do
+  def init(args) do
     store_env = Application.get_env(:samly, Samly.State, [])
     store_provider = store_env[:store] || Samly.State.ETS
     store_opts = store_env[:opts] || []
     State.init(store_provider, store_opts)
+    is_dynamic = :dynamic_providers in args
 
     opts = Application.get_env(:samly, Samly.Provider, [])
+
+    if is_dynamic do
+      if opts[:provider_callback] do
+        Application.put_env(:samly, :provider_callback, opts[:provider_callback])
+      end
+
+      Application.put_env(:samly, :dynamic_providers, true)
+    end
 
     # must be done prior to loading the providers
     idp_id_from =
@@ -58,12 +75,14 @@ defmodule Samly.Provider do
     Application.put_env(:samly, :idp_id_from, idp_id_from)
 
     service_providers = Samly.SpData.load_providers(opts[:service_providers] || [])
-
-    identity_providers =
-      Samly.IdpData.load_providers(opts[:identity_providers] || [], service_providers)
-
     Application.put_env(:samly, :service_providers, service_providers)
-    Application.put_env(:samly, :identity_providers, identity_providers)
+
+    if !is_dynamic do
+      identity_providers =
+        Samly.IdpData.load_providers(opts[:identity_providers] || [], service_providers)
+
+      Application.put_env(:samly, :identity_providers, identity_providers)
+    end
 
     {:ok, %{}}
   end

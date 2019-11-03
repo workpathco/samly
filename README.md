@@ -49,6 +49,18 @@ children = [
 ]
 ```
 
+or
+
+```elixir
+# application.ex
+
+children = [
+  # ...
+  {Samly.Provider, [:dynamic_providers]},
+]
+```
+if you want to add providers dynamically
+
 ## Router Change
 
 Make the following change in your application router.

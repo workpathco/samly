@@ -3,9 +3,9 @@ defmodule Samly.Router do
 
   use Plug.Router
 
-  plug :secure_samly
-  plug :match
-  plug :dispatch
+  plug(:secure_samly)
+  plug(:match)
+  plug(:dispatch)
 
   forward("/auth", to: Samly.AuthRouter)
   forward("/sp", to: Samly.SPRouter)

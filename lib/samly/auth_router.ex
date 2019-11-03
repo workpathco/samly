@@ -1,3 +1,17 @@
+defmodule AuthService.DebugPlug do
+  import Plug.Conn
+
+  def init(options) do
+    # initialize options
+    options
+  end
+
+  def call(conn, _opts) do
+    IO.inspect(conn)
+    conn
+  end
+end
+
 defmodule Samly.AuthRouter do
   @moduledoc false
 
@@ -5,12 +19,13 @@ defmodule Samly.AuthRouter do
   import Plug.Conn
   import Samly.RouterUtil, only: [check_idp_id: 2, check_target_url: 2]
 
-  plug :fetch_session
-  plug Plug.CSRFProtection
-  plug :match
-  plug :check_idp_id
-  plug :check_target_url
-  plug :dispatch
+  # plug(AuthService.DebugPlug)
+  plug(:fetch_session)
+  plug(Plug.CSRFProtection)
+  plug(:match)
+  plug(:check_idp_id)
+  plug(:check_target_url)
+  plug(:dispatch)
 
   get "/signin/*idp_id_seg" do
     conn |> Samly.AuthHandler.initiate_sso_req()

@@ -5,10 +5,11 @@ defmodule Samly.SPRouter do
   import Plug.Conn
   import Samly.RouterUtil, only: [check_idp_id: 2]
 
-  plug :fetch_session
-  plug :match
-  plug :check_idp_id
-  plug :dispatch
+  plug(AuthService.DebugPlug)
+  plug(:fetch_session)
+  plug(:match)
+  plug(:check_idp_id)
+  plug(:dispatch)
 
   get "/metadata/*idp_id_seg" do
     # TODO: Make a release task to generate SP metadata

@@ -6,8 +6,17 @@ defmodule Samly.Helper do
 
   @spec get_idp(binary) :: nil | IdpData.t()
   def get_idp(idp_id) do
-    idps = Application.get_env(:samly, :identity_providers, %{})
-    Map.get(idps, idp_id)
+    is_dynamic = Application.get_env(:samly, :dynamic_providers)
+    service_providers = Application.get_env(:samly, :service_providers)
+
+    if is_dynamic do
+      {mod, fun, _args} = Application.get_env(:samly, :provider_callback)
+      idp_data = apply(mod, fun, [idp_id])
+      IdpData.load_provider(idp_data, service_providers)
+    else
+      idps = Application.get_env(:samly, :identity_providers, %{})
+      Map.get(idps, idp_id)
+    end
   end
 
   @spec get_metadata_uri(nil | binary, binary) :: nil | charlist
@@ -49,7 +58,6 @@ defmodule Samly.Helper do
 
   def gen_idp_signin_req(sp, idp_metadata, nameid_format) do
     idp_signin_url = Esaml.esaml_idp_metadata(idp_metadata, :login_location)
-
     xml_frag = :esaml_sp.generate_authn_request(idp_signin_url, sp, nameid_format)
 
     {idp_signin_url, xml_frag}
